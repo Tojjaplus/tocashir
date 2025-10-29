@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة طلبات الواتساب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --whatsapp-green: #25D366;
+            --whatsapp-dark: #128C7E;
+            --light-bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-dark: #1a1a1a;
+            --text-light: #666666;
+            --border: #eaeaea;
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --success: #00C851;
+            --warning: #ffbb33;
+            --danger: #ff4444;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo i {
+            font-size: 28px;
+            color: var(--whatsapp-green);
+        }
+        
+        .logo h1 {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--whatsapp-green), var(--whatsapp-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--whatsapp-green), var(--whatsapp-dark));
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: var(--text-dark);
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .btn-secondary:hover {
+            background: #f8f9fa;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            header {
+                padding: 20px;
+                margin-bottom: 30px;
+            }
+            
+            .logo h1 {
+                font-size: 24px;
+            }
+            
+            .logo i {
+                font-size: 32px;
+            }
+            
+            .btn {
+                padding: 12px 18px;
+                font-size: 15px;
+            }
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title i {
+            color: var(--whatsapp-green);
+            background: rgba(37, 211, 102, 0.1);
+            padding: 8px;
+            border-radius: 10px;
+        }
+        
+        .order-count {
+            background: linear-gradient(135deg, var(--whatsapp-green), var(--whatsapp-dark));
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 8px rgba(37, 211, 102, 0.3);
+        }
+        
+        .orders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .order-item {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .order-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+        }
+        
+        .order-item.new {
+            border-right: 5px solid var(--whatsapp-green);
+        }
+        
+        .order-item.new::before {
+            background: var(--whatsapp-green);
+        }
+        
+        .order-item.in-progress {
+            border-right: 5px solid var(--warning);
+        }
+        
+        .order-item.in-progress::before {
+            background: var(--warning);
+        }
+        
+        .order-item.ready {
+            border-right: 5px solid var(--success);
+        }
+        
+        .order-item.ready::before {
+            background: var(--success);
+        }
+        
+        .order-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .order-id {
+            font-weight: 700;
+            color: var(--text-dark);
+            font-size: 16px;
+        }
+        
+        .order-time {
+            font-size: 13px;
+            color: var(--text-light);
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 16px;
+        }
+        
+        .customer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .customer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--whatsapp-green), var(--whatsapp-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .customer-details {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .customer-name {
+            font-weight: 700;
+            margin-bottom: 4px;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .customer-location {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--whatsapp-dark);
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .order-items {
+            margin-bottom: 12px;
+        }
+        
+        .order-item-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed var(--border);
+            font-size: 14px;
+        }
+        
+        .item-name {
+            font-weight: 500;
+        }
+        
+        .item-qty {
+            color: var(--text-light);
+            background: #f8f9fa;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        
+        .order-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .status-new {
+            background: rgba(37, 211, 102, 0.15);
+            color: var(--whatsapp-dark);
+        }
+        
+        .status-in-progress {
+            background: rgba(255, 187, 51, 0.15);
+            color: #e6a700;
+        }
+        
+        .status-ready {
+            background: rgba(0, 200, 81, 0.15);
+            color: var(--success);
+        }
+        
+        .action-btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--whatsapp-green), var(--whatsapp-dark));
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+        }
+        
+        .action-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--whatsapp-green);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 8px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--whatsapp-green), var(--whatsapp-dark));
+            border-radius: 8px;
+        }
+        
+        .order-total {
+            font-weight: 700;
+            color: var(--whatsapp-dark);
+            font-size: 16px;
+        }
+        
+        .order-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--text-light);
+        }
+        
+        .orders-footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .orders-counter {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fab fa-whatsapp"></i>
+                <h1>لوحة طلبات الواتساب</h1>
+            </div>
+            <div class="header-controls">
+                <button class="btn btn-secondary">
+                    <i class="fas fa-cog"></i> الإعدادات
+                </button>
+                <button class="btn btn-primary">
+                    <i class="fas fa-plus"></i> طلب جديد
+                </button>
+            </div>
+        </header>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-list"></i> الطلبات النشطة
+                        <span class="order-count">3</span>
+                    </div>
+                </div>
+                <div class="orders-list" id="activeOrders">
+                    <!-- Order 1 -->
+                    <div class="order-item new">
+                        <div class="order-item-header">
+                            <div class="order-id">طلب #1001</div>
+                            <div class="order-time">١٠:٣٠ ص</div>
+                        </div>
+                        <div class="customer-info">
+                            <div class="customer-avatar">أ</div>
+                            <div class="customer-details">
+                                <div class="customer-name">أحمد محمد</div>
+                                <div class="customer-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    حي القادسية، الرياض
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-items">
+                            <div class="order-item-row">
+                                <span class="item-name">بيتزا دجاج</span>
+                                <span class="item-qty">1x</span>
+                            </div>
+                            <div class="order-item-row">
+                                <span class="item-name">كوكا كولا</span>
+                                <span class="item-qty">2x</span>
+                            </div>
+                        </div>
+                        <div class="order-meta">
+                            <div>الإجمالي: <span class="order-total">٦١ ر.س</span></div>
+                            <div>الواتساب <i class="fab fa-whatsapp" style="color: var(--whatsapp-green);"></i></div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="order-status">
+                            <div class="status-badge status-new">طلب جديد</div>
+                            <button class="action-btn primary">تأكيد الطلب</button>
+                        </div>
+                    </div>
+
+                    <!-- Order 2 -->
+                    <div class="order-item in-progress">
+                        <div class="order-item-header">
+                            <div class="order-id">طلب #1002</div>
+                            <div class="order-time">١٠:١٥ ص</div>
+                        </div>
+                        <div class="customer-info">
+                            <div class="customer-avatar">س</div>
+                            <div class="customer-details">
+                                <div class="customer-name">سارة عبدالله</div>
+                                <div class="customer-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    حي الياسمين، الرياض
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-items">
+                            <div class="order-item-row">
+                                <span class="item-name">برجر لحم</span>
+                                <span class="item-qty">2x</span>
+                            </div>
+                            <div class="order-item-row">
+                                <span class="item-name">بطاطس مقلية</span>
+                                <span class="item-qty">1x</span>
+                            </div>
+                        </div>
+                        <div class="order-meta">
+                            <div>الإجمالي: <span class="order-total">٨٢ ر.س</span></div>
+                            <div>الواتساب <i class="fab fa-whatsapp" style="color: var(--whatsapp-green);"></i></div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 33%"></div>
+                        </div>
+                        <div class="order-status">
+                            <div class="status-badge status-in-progress">قيد التحضير</div>
+                            <button class="action-btn primary">تم التحضير</button>
+                        </div>
+                    </div>
+
+                    <!-- Order 3 -->
+                    <div class="order-item ready">
+                        <div class="order-item-header">
+                            <div class="order-id">طلب #1003</div>
+                            <div class="order-time">٩:٤٥ ص</div>
+                        </div>
+                        <div class="customer-info">
+                            <div class="customer-avatar">خ</div>
+                            <div class="customer-details">
+                                <div class="customer-name">خالد العتيبي</div>
+                                <div class="customer-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    حي اليرموك، الرياض
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-items">
+                            <div class="order-item-row">
+                                <span class="item-name">شاورما دجاج</span>
+                                <span class="item-qty">3x</span>
+                            </div>
+                            <div class="order-item-row">
+                                <span class="item-name">عصير برتقال</span>
+                                <span class="item-qty">2x</span>
+                            </div>
+                        </div>
+                        <div class="order-meta">
+                            <div>الإجمالي: <span class="order-total">١٠٣ ر.س</span></div>
+                            <div>الواتساب <i class="fab fa-whatsapp" style="color: var(--whatsapp-green);"></i></div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 66%"></div>
+                        </div>
+                        <div class="order-status">
+                            <div class="status-badge status-ready">جاهز للتسليم</div>
+                            <button class="action-btn primary">إكمال الطلب</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="orders-footer">
+                    <div class="orders-counter">يتم عرض 3 طلبات فقط</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-history"></i> الطلبات المكتملة
+                        <span class="order-count">2</span>
+                    </div>
+                </div>
+                <div class="orders-list" id="completedOrders">
+                    <!-- Completed Order 1 -->
+                    <div class="order-item">
+                        <div class="order-item-header">
+                            <div class="order-id">طلب #1000</div>
+                            <div class="order-time">٩:٢٠ ص</div>
+                        </div>
+                        <div class="customer-info">
+                            <div class="customer-avatar">ف</div>
+                            <div class="customer-details">
+                                <div class="customer-name">فاطمة القحطاني</div>
+                                <div class="customer-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    حي النخيل، الرياض
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-items">
+                            <div class="order-item-row">
+                                <span class="item-name">كبسة دجاج</span>
+                                <span class="item-qty">1x</span>
+                            </div>
+                        </div>
+                        <div class="order-status">
+                            <div class="status-badge status-ready">مكتمل</div>
+                            <div class="order-total">٥٠ ر.س</div>
+                        </div>
+                    </div>
+
+                    <!-- Completed Order 2 -->
+                    <div class="order-item">
+                        <div class="order-item-header">
+                            <div class="order-id">طلب #999</div>
+                            <div class="order-time">٨:٥٠ ص</div>
+                        </div>
+                        <div class="customer-info">
+                            <div class="customer-avatar">م</div>
+                            <div class="customer-details">
+                                <div class="customer-name">محمد الحربي</div>
+                                <div class="customer-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    حي العليا، الرياض
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-items">
+                            <div class="order-item-row">
+                                <span class="item-name">بيتزا دجاج</span>
+                                <span class="item-qty">1x</span>
+                            </div>
+                            <div class="order-item-row">
+                                <span class="item-name">بطاطس مقلية</span>
+                                <span class="item-qty">1x</span>
+                            </div>
+                        </div>
+                        <div class="order-status">
+                            <div class="status-badge status-ready">مكتمل</div>
+                            <div class="order-total">٥٧ ر.س</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">٥</div>
+                        <div class="stat-label">طلبات اليوم</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">١٥د</div>
+                        <div class="stat-label">متوسط وقت التحضير</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple button interactions (optional - can be removed)
+        document.querySelectorAll('.action-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const orderItem = this.closest('.order-item');
+                const statusBadge = orderItem.querySelector('.status-badge');
+                const progressFill = orderItem.querySelector('.progress-fill');
+                
+                if (this.textContent === 'تأكيد الطلب') {
+                    this.textContent = 'تم التحضير';
+                    statusBadge.textContent = 'قيد التحضير';
+                    statusBadge.className = 'status-badge status-in-progress';
+                    progressFill.style.width = '33%';
+                    orderItem.className = 'order-item in-progress';
+                } else if (this.textContent === 'تم التحضير') {
+                    this.textContent = 'إكمال الطلب';
+                    statusBadge.textContent = 'جاهز للتسليم';
+                    statusBadge.className = 'status-badge status-ready';
+                    progressFill.style.width = '66%';
+                    orderItem.className = 'order-item ready';
+                } else if (this.textContent === 'إكمال الطلب') {
+                    // Move to completed section (simplified)
+                    alert('تم إكمال الطلب بنجاح');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
