@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة إدارة طلبات الواتساب الديناميكية</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font: Tajawal (for RTL modern look) -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Custom Tailwind Configuration */
+        :root {
+            --whatsapp-green: #25D366;
+            --whatsapp-dark: #128C7E;
+            --primary-light: #44E586;
+        }
+
+        /* Use Tajawal Font */
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f7f9fc;
+        }
+        
+        /* Utility for WhatsApp Gradient */
+        .bg-whatsapp {
+            background: linear-gradient(135deg, var(--whatsapp-green), var(--whatsapp-dark));
+        }
+
+        .text-whatsapp {
+            color: var(--whatsapp-dark);
+        }
+
+        .border-whatsapp {
+            border-color: var(--whatsapp-green);
+        }
+
+        /* Custom Scrollbar for Kanban Columns */
+        .kanban-column {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .kanban-column::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .kanban-column::-webkit-scrollbar-thumb {
+            background-color: var(--whatsapp-dark);
+            border-radius: 10px;
+        }
+
+        .kanban-column::-webkit-scrollbar-track {
+            background: #e0e0e0;
+        }
+
+        /* Animation for new order card */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .order-card {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* District Colors */
+        .district-alyarmouk {
+            background-color: #e6f7ff;
+            border-right-color: #1890ff;
+        }
+        
+        .district-alqadisiyah {
+            background-color: #f6ffed;
+            border-right-color: #52c41a;
+        }
+        
+        .district-alghadeer {
+            background-color: #fff7e6;
+            border-right-color: #fa8c16;
+        }
+        
+        .district-alfalah {
+            background-color: #f9f0ff;
+            border-right-color: #722ed1;
+        }
+        
+        .district-annakheel {
+            background-color: #fff2e8;
+            border-right-color: #fa541c;
+        }
+        
+        .district-alulya {
+            background-color: #e6fffb;
+            border-right-color: #13c2c2;
+        }
+        
+        .district-arrawdah {
+            background-color: #fcffe6;
+            border-right-color: #a0d911;
+        }
+        
+        .district-qurtubah {
+            background-color: #f0f5ff;
+            border-right-color: #2f54eb;
+        }
+        
+        /* New Order Animation */
+        @keyframes highlightPulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
+        
+        .new-order-highlight {
+            animation: highlightPulse 2s ease-out;
+        }
+        
+        /* Demo Mode Indicator */
+        .demo-indicator {
+            background: linear-gradient(45deg, #ff6b6b, #ffa726, #66bb6a, #42a5f5);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .kanban-column {
+                max-height: 50vh;
+            }
+            
+            .mobile-stack {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .mobile-text-sm {
+                font-size: 0.875rem;
+            }
+            
+            .mobile-text-xs {
+                font-size: 0.75rem;
+            }
+            
+            .mobile-p-2 {
+                padding: 0.5rem;
+            }
+            
+            .mobile-p-3 {
+                padding: 0.75rem;
+            }
+            
+            .mobile-grid-cols-1 {
+                grid-template-columns: 1fr;
+            }
+            
+            .mobile-gap-2 {
+                gap: 0.5rem;
+            }
+            
+            .mobile-gap-3 {
+                gap: 0.75rem;
+            }
+        }
+
+        /* Touch-friendly buttons */
+        .touch-button {
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        /* Better mobile navigation */
+        .mobile-tabs {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            z-index: 40;
+        }
+
+        /* Swipeable columns for mobile */
+        .swipe-container {
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .swipe-column {
+            scroll-snap-align: start;
+            min-width: 100%;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gray-50 flex flex-col pb-16 md:pb-0">
+
+    <!-- Demo Mode Indicator -->
+    <div class="demo-indicator py-2 text-center text-white font-bold text-sm mobile-text-xs">
+        <i class="fas fa-broadcast-tower ml-2"></i> وضع المحاكاة النشط - طلبات واتساب تلقائية
+    </div>
+
+    <!-- Custom Message Box -->
+    <div id="custom-message-box" class="fixed inset-0 z-50 bg-black bg-opacity-30 hidden items-center justify-center p-4" onclick="closeCustomMessage()">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full mx-4 border-t-4 border-green-500" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-start mb-4">
+                <h3 id="msg-title" class="text-xl font-bold text-gray-800">العنوان</h3>
+                <button onclick="closeCustomMessage()" class="text-gray-400 hover:text-gray-600 touch-button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p id="msg-message" class="text-gray-600 mb-6">الرسالة</p>
+            <button onclick="closeCustomMessage()" class="w-full bg-whatsapp text-white py-3 rounded-lg font-semibold hover:opacity-90 touch-button">حسناً</button>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="bg-white shadow-md sticky top-0 z-30">
+        <div class="container mx-auto px-3 sm:px-6 lg:px-8 py-3">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+                
+                <!-- Logo -->
+                <div class="flex items-center justify-center md:justify-start space-x-2 space-x-reverse">
+                    <i class="fab fa-whatsapp text-3xl md:text-4xl text-whatsapp"></i>
+                    <div class="text-center md:text-right">
+                        <h1 class="text-xl md:text-2xl font-extrabold text-whatsapp">طلبات الواتساب</h1>
+                        <p class="text-xs text-gray-500 hidden md:block">نظام إدارة الطلبات الديناميكي</p>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex items-center justify-center space-x-2 space-x-reverse">
+                    <!-- Auto Demo Toggle -->
+                    <button id="demoToggle" onclick="toggleDemoMode()"
+                        class="bg-green-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-xl font-bold transition duration-300 hover:bg-green-700 shadow-md shadow-green-300/50 flex items-center gap-2 text-xs md:text-sm touch-button">
+                        <i class="fas fa-pause"></i>
+                        <span class="hidden sm:inline">إيقاف المحاكاة</span>
+                    </button>
+                    
+                    <!-- Manual Add Order Button -->
+                    <button onclick="addManualOrder()"
+                        class="bg-whatsapp text-white px-3 py-2 md:px-4 md:py-2 rounded-xl font-bold transition duration-300 hover:bg-primary-light shadow-md shadow-green-300/50 flex items-center gap-2 text-xs md:text-sm touch-button">
+                        <i class="fas fa-plus"></i>
+                        <span class="hidden sm:inline">طلب جديد</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Stats Bar -->
+    <div class="bg-white shadow-sm md:hidden">
+        <div class="container mx-auto px-3 py-2">
+            <div class="flex justify-between items-center text-center">
+                <div>
+                    <p class="text-xs text-gray-500">النشطة</p>
+                    <p id="mobile-active-count" class="text-lg font-bold text-whatsapp">0</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">جديد</p>
+                    <p id="mobile-new-count" class="text-lg font-bold text-green-600">0</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">قيد التحضير</p>
+                    <p id="mobile-progress-count" class="text-lg font-bold text-yellow-600">0</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">جاهز</p>
+                    <p id="mobile-ready-count" class="text-lg font-bold text-blue-600">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kanban Dashboard -->
+    <main class="container mx-auto px-3 sm:px-6 lg:px-8 py-4 flex-grow">
+        
+        <!-- Status Summary Cards - Desktop -->
+        <div class="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-xl shadow-lg border-b-4 border-whatsapp text-center">
+                <p class="text-sm text-gray-500 font-medium">إجمالي الطلبات النشطة</p>
+                <p id="active-total-count" class="text-3xl font-extrabold text-whatsapp mt-1">0</p>
+            </div>
+             <div class="bg-white p-4 rounded-xl shadow-lg border-b-4 border-green-500 text-center">
+                <p class="text-sm text-gray-500 font-medium">جديد</p>
+                <p id="new-count" class="text-3xl font-extrabold text-green-600 mt-1">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-lg border-b-4 border-yellow-500 text-center">
+                <p class="text-sm text-gray-500 font-medium">قيد التحضير</p>
+                <p id="progress-count" class="text-3xl font-extrabold text-yellow-600 mt-1">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-lg border-b-4 border-blue-500 text-center">
+                <p class="text-sm text-gray-500 font-medium">جاهز للتسليم</p>
+                <p id="ready-count" class="text-3xl font-extrabold text-blue-600 mt-1">0</p>
+            </div>
+        </div>
+
+        <!-- Mobile Tabs -->
+        <div class="md:hidden mb-4">
+            <div class="flex overflow-x-auto bg-white rounded-lg shadow-sm p-1">
+                <button id="tab-new" class="flex-1 py-2 px-3 text-center rounded-md font-medium text-sm transition-colors touch-button bg-green-100 text-green-700" onclick="switchMobileTab('new')">
+                    <i class="fas fa-bell mr-1"></i> جديد
+                    <span id="mobile-tab-new-badge" class="bg-red-500 text-white text-xs px-1 rounded-full ml-1">0</span>
+                </button>
+                <button id="tab-progress" class="flex-1 py-2 px-3 text-center rounded-md font-medium text-sm transition-colors touch-button" onclick="switchMobileTab('progress')">
+                    <i class="fas fa-hourglass-half mr-1"></i> قيد التحضير
+                    <span id="mobile-tab-progress-badge" class="bg-yellow-500 text-white text-xs px-1 rounded-full ml-1">0</span>
+                </button>
+                <button id="tab-ready" class="flex-1 py-2 px-3 text-center rounded-md font-medium text-sm transition-colors touch-button" onclick="switchMobileTab('ready')">
+                    <i class="fas fa-check-circle mr-1"></i> جاهز
+                    <span id="mobile-tab-ready-badge" class="bg-blue-500 text-white text-xs px-1 rounded-full ml-1">0</span>
+                </button>
+                <button id="tab-completed" class="flex-1 py-2 px-3 text-center rounded-md font-medium text-sm transition-colors touch-button" onclick="switchMobileTab('completed')">
+                    <i class="fas fa-archive mr-1"></i> مكتمل
+                </button>
+            </div>
+        </div>
+
+        <!-- Desktop Columns -->
+        <div class="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+
+            <!-- New Orders Column -->
+            <div class="bg-white/70 p-4 rounded-xl shadow-xl backdrop-blur-sm">
+                <h2 class="text-xl font-extrabold mb-4 pb-2 border-b border-green-300 text-green-700 flex items-center gap-2">
+                    <i class="fas fa-bell animate-pulse"></i> طلبات جديدة
+                    <span id="new-badge" class="bg-red-500 text-white text-xs px-2 py-1 rounded-full hidden">جديد!</span>
+                </h2>
+                <div id="new-orders-container" class="space-y-4 kanban-column p-1">
+                    <div class="text-center p-6 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                        <i class="fas fa-comments text-3xl mb-3"></i>
+                        <p class="font-medium">في انتظار طلبات واتساب الجديدة...</p>
+                        <p class="text-xs mt-2">سيظهر الطلبات الجديدة هنا تلقائياً</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- In Progress Column -->
+            <div class="bg-white/70 p-4 rounded-xl shadow-xl backdrop-blur-sm">
+                <h2 class="text-xl font-extrabold mb-4 pb-2 border-b border-yellow-300 text-yellow-700 flex items-center gap-2">
+                    <i class="fas fa-hourglass-half"></i> قيد التحضير
+                </h2>
+                <div id="progress-orders-container" class="space-y-4 kanban-column p-1">
+                    <div class="text-center p-6 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                        <i class="fas fa-utensils text-3xl mb-3"></i>
+                        <p class="font-medium">لا توجد طلبات قيد التحضير</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ready Column -->
+            <div class="bg-white/70 p-4 rounded-xl shadow-xl backdrop-blur-sm">
+                <h2 class="text-xl font-extrabold mb-4 pb-2 border-b border-blue-300 text-blue-700 flex items-center gap-2">
+                    <i class="fas fa-check-circle"></i> جاهز للتسليم
+                </h2>
+                <div id="ready-orders-container" class="space-y-4 kanban-column p-1">
+                    <div class="text-center p-6 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                        <i class="fas fa-motorcycle text-3xl mb-3"></i>
+                        <p class="font-medium">لا توجد طلبات جاهزة للتسليم</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed Column -->
+            <div class="bg-white/70 p-4 rounded-xl shadow-xl backdrop-blur-sm">
+                <h2 class="text-xl font-extrabold mb-4 pb-2 border-b border-gray-300 text-gray-700 flex items-center gap-2">
+                    <i class="fas fa-clipboard-check"></i> مكتمل
+                </h2>
+                <div id="completed-orders-container" class="space-y-4 kanban-column p-1">
+                    <div class="text-center p-6 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                        <i class="fas fa-archive text-3xl mb-3"></i>
+                        <p class="font-medium">لا توجد طلبات مكتملة</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Columns (Swipeable) -->
+        <div id="mobile-columns" class="md:hidden swipe-container">
+            <!-- New Orders Column - Mobile -->
+            <div id="mobile-new-column" class="swipe-column">
+                <div class="bg-white/70 p-3 rounded-xl shadow-xl backdrop-blur-sm">
+                    <h2 class="text-lg font-extrabold mb-3 pb-2 border-b border-green-300 text-green-700 flex items-center gap-2">
+                        <i class="fas fa-bell animate-pulse"></i> طلبات جديدة
+                    </h2>
+                    <div id="mobile-new-orders-container" class="space-y-3 kanban-column">
+                        <div class="text-center p-4 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                            <i class="fas fa-comments text-2xl mb-2"></i>
+                            <p class="font-medium text-sm">في انتظار طلبات واتساب...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- In Progress Column - Mobile -->
+            <div id="mobile-progress-column" class="swipe-column hidden">
+                <div class="bg-white/70 p-3 rounded-xl shadow-xl backdrop-blur-sm">
+                    <h2 class="text-lg font-extrabold mb-3 pb-2 border-b border-yellow-300 text-yellow-700 flex items-center gap-2">
+                        <i class="fas fa-hourglass-half"></i> قيد التحضير
+                    </h2>
+                    <div id="mobile-progress-orders-container" class="space-y-3 kanban-column">
+                        <div class="text-center p-4 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                            <i class="fas fa-utensils text-2xl mb-2"></i>
+                            <p class="font-medium text-sm">لا توجد طلبات قيد التحضير</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ready Column - Mobile -->
+            <div id="mobile-ready-column" class="swipe-column hidden">
+                <div class="bg-white/70 p-3 rounded-xl shadow-xl backdrop-blur-sm">
+                    <h2 class="text-lg font-extrabold mb-3 pb-2 border-b border-blue-300 text-blue-700 flex items-center gap-2">
+                        <i class="fas fa-check-circle"></i> جاهز للتسليم
+                    </h2>
+                    <div id="mobile-ready-orders-container" class="space-y-3 kanban-column">
+                        <div class="text-center p-4 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                            <i class="fas fa-motorcycle text-2xl mb-2"></i>
+                            <p class="font-medium text-sm">لا توجد طلبات جاهزة</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed Column - Mobile -->
+            <div id="mobile-completed-column" class="swipe-column hidden">
+                <div class="bg-white/70 p-3 rounded-xl shadow-xl backdrop-blur-sm">
+                    <h2 class="text-lg font-extrabold mb-3 pb-2 border-b border-gray-300 text-gray-700 flex items-center gap-2">
+                        <i class="fas fa-clipboard-check"></i> مكتمل
+                    </h2>
+                    <div id="mobile-completed-orders-container" class="space-y-3 kanban-column">
+                        <div class="text-center p-4 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                            <i class="fas fa-archive text-2xl mb-2"></i>
+                            <p class="font-medium text-sm">لا توجد طلبات مكتملة</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-tabs md:hidden">
+        <div class="flex justify-around items-center py-2">
+            <button class="flex flex-col items-center text-whatsapp touch-button" onclick="switchMobileTab('new')">
+                <i class="fas fa-bell text-lg"></i>
+                <span class="text-xs mt-1">جديد</span>
+            </button>
+            <button class="flex flex-col items-center text-gray-500 touch-button" onclick="switchMobileTab('progress')">
+                <i class="fas fa-hourglass-half text-lg"></i>
+                <span class="text-xs mt-1">قيد التحضير</span>
+            </button>
+            <button class="flex flex-col items-center text-gray-500 touch-button" onclick="switchMobileTab('ready')">
+                <i class="fas fa-check-circle text-lg"></i>
+                <span class="text-xs mt-1">جاهز</span>
+            </button>
+            <button class="flex flex-col items-center text-gray-500 touch-button" onclick="switchMobileTab('completed')">
+                <i class="fas fa-archive text-lg"></i>
+                <span class="text-xs mt-1">مكتمل</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Demo Configuration
+        const DEMO_CONFIG = {
+            enabled: true,
+            interval: null,
+            minDelay: 5000,
+            maxDelay: 7000,
+            orderCounter: 0
+        };
+
+        // Districts with Arabic names
+        const DISTRICTS = [
+            { name: 'حي اليرموك', class: 'district-alyarmouk' },
+            { name: 'حي القادسية', class: 'district-alqadisiyah' },
+            { name: 'حي الغدير', class: 'district-alghadeer' },
+            { name: 'حي الفلاح', class: 'district-alfalah' },
+            { name: 'حي النخيل', class: 'district-annakheel' },
+            { name: 'حي العليا', class: 'district-alulya' },
+            { name: 'حي الروضة', class: 'district-arrawdah' },
+            { name: 'حي قرطبة', class: 'district-qurtubah' }
+        ];
+
+        // Food items for demo
+        const FOOD_ITEMS = [
+            { name: 'بيتزا مارجريتا', basePrice: 45 },
+            { name: 'برجر كلاسيك', basePrice: 35 },
+            { name: 'سلطة سيزر', basePrice: 25 },
+            { name: 'شاورما دجاج', basePrice: 30 },
+            { name: 'عصير برتقال', basePrice: 15 },
+            { name: 'بطاطس مقلية', basePrice: 12 },
+            { name: 'كبة باللبن', basePrice: 40 },
+            { name: 'مياه معدنية', basePrice: 5 }
+        ];
+
+        // Customer names for demo
+        const CUSTOMER_NAMES = [
+            'أحمد محمد', 'فاطمة علي', 'خالد حسن', 'نورة عبدالله', 
+            'محمد إبراهيم', 'سارة خالد', 'عبدالرحمن سعيد', 'لينا فارس',
+            'يوسف ناصر', 'هدى كمال', 'ماجد راشد', 'آمنة وليد'
+        ];
+
+        // Orders storage
+        let orders = [];
+        let orderIdCounter = 1000;
+        let currentMobileTab = 'new';
+
+        // Initialize demo
+        function initDemo() {
+            startDemoMode();
+            updateMobileTabBadges();
+        }
+
+        // Switch mobile tabs
+        function switchMobileTab(tab) {
+            currentMobileTab = tab;
+            
+            // Update tabs
+            document.querySelectorAll('#mobile-columns > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(`mobile-${tab}-column`).classList.remove('hidden');
+            
+            // Update tab buttons
+            document.querySelectorAll('.mobile-tabs button').forEach(btn => {
+                btn.classList.remove('text-whatsapp');
+                btn.classList.add('text-gray-500');
+            });
+            document.querySelector(`.mobile-tabs button:nth-child(${getTabIndex(tab)})`).classList.add('text-whatsapp');
+            
+            // Update tab headers
+            document.querySelectorAll('#tab-new, #tab-progress, #tab-ready, #tab-completed').forEach(btn => {
+                btn.classList.remove('bg-green-100', 'text-green-700');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('bg-green-100', 'text-green-700');
+        }
+
+        function getTabIndex(tab) {
+            const tabs = ['new', 'progress', 'ready', 'completed'];
+            return tabs.indexOf(tab) + 1;
+        }
+
+        // Toggle demo mode
+        function toggleDemoMode() {
+            DEMO_CONFIG.enabled = !DEMO_CONFIG.enabled;
+            const button = document.getElementById('demoToggle');
+            
+            if (DEMO_CONFIG.enabled) {
+                button.innerHTML = '<i class="fas fa-pause"></i>' + (window.innerWidth >= 640 ? ' إيقاف المحاكاة' : '');
+                button.className = button.className.replace('bg-gray-600', 'bg-green-600').replace('hover:bg-gray-700', 'hover:bg-green-700');
+                startDemoMode();
+            } else {
+                button.innerHTML = '<i class="fas fa-play"></i>' + (window.innerWidth >= 640 ? ' تشغيل المحاكاة' : '');
+                button.className = button.className.replace('bg-green-600', 'bg-gray-600').replace('hover:bg-green-700', 'hover:bg-gray-700');
+                stopDemoMode();
+            }
+        }
+
+        // Start automatic order generation
+        function startDemoMode() {
+            if (DEMO_CONFIG.interval) {
+                clearInterval(DEMO_CONFIG.interval);
+            }
+            
+            DEMO_CONFIG.interval = setInterval(() => {
+                generateWhatsAppOrder();
+            }, getRandomDelay());
+        }
+
+        // Stop automatic order generation
+        function stopDemoMode() {
+            if (DEMO_CONFIG.interval) {
+                clearInterval(DEMO_CONFIG.interval);
+                DEMO_CONFIG.interval = null;
+            }
+        }
+
+        // Get random delay between 5-7 seconds
+        function getRandomDelay() {
+            return Math.floor(Math.random() * (DEMO_CONFIG.maxDelay - DEMO_CONFIG.minDelay + 1)) + DEMO_CONFIG.minDelay;
+        }
+
+        // Generate a random WhatsApp order
+        function generateWhatsAppOrder() {
+            DEMO_CONFIG.orderCounter++;
+            
+            const district = DISTRICTS[Math.floor(Math.random() * DISTRICTS.length)];
+            const customerName = CUSTOMER_NAMES[Math.floor(Math.random() * CUSTOMER_NAMES.length)];
+            const phone = `9665${Math.floor(Math.random() * 90000000 + 10000000)}`;
+            
+            // Generate 1-3 random items
+            const numItems = Math.floor(Math.random() * 3) + 1;
+            const items = [];
+            let total = 0;
+            
+            for (let i = 0; i < numItems; i++) {
+                const item = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)];
+                const quantity = Math.floor(Math.random() * 3) + 1;
+                const itemTotal = item.basePrice * quantity;
+                
+                items.push({
+                    name: item.name,
+                    qty: `${quantity}x`,
+                    price: item.basePrice,
+                    total: itemTotal
+                });
+                
+                total += itemTotal;
+            }
+            
+            const newOrder = {
+                id: `WA${orderIdCounter++}`,
+                customerName: customerName,
+                customerPhone: phone,
+                location: district.name,
+                districtClass: district.class,
+                items: items,
+                total: total,
+                status: 'جديد',
+                timestamp: new Date(),
+                source: 'whatsapp'
+            };
+            
+            addOrderToDashboard(newOrder);
+            showNewOrderNotification(newOrder);
+        }
+
+        // Add manual order
+        function addManualOrder() {
+            const district = DISTRICTS[Math.floor(Math.random() * DISTRICTS.length)];
+            const customerName = CUSTOMER_NAMES[Math.floor(Math.random() * CUSTOMER_NAMES.length)];
+            const phone = `9665${Math.floor(Math.random() * 90000000 + 10000000)}`;
+            
+            const item = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)];
+            const quantity = Math.floor(Math.random() * 2) + 1;
+            const total = item.basePrice * quantity;
+            
+            const newOrder = {
+                id: `MN${orderIdCounter++}`,
+                customerName: customerName,
+                customerPhone: phone,
+                location: district.name,
+                districtClass: district.class,
+                items: [{
+                    name: item.name,
+                    qty: `${quantity}x`,
+                    price: item.basePrice,
+                    total: total
+                }],
+                total: total,
+                status: 'جديد',
+                timestamp: new Date(),
+                source: 'manual'
+            };
+            
+            addOrderToDashboard(newOrder);
+            showCustomMessage('تم الإضافة', `تم إضافة طلب جديد من ${customerName}`, 'success');
+        }
+
+        // Add order to dashboard
+        function addOrderToDashboard(order) {
+            orders.unshift(order);
+            renderOrders();
+            
+            // Highlight new order
+            const newOrderElement = document.getElementById(`order-${order.id}`);
+            if (newOrderElement) {
+                newOrderElement.classList.add('new-order-highlight');
+                setTimeout(() => {
+                    newOrderElement.classList.remove('new-order-highlight');
+                }, 2000);
+            }
+        }
+
+        // Show notification for new order
+        function showNewOrderNotification(order) {
+            const badge = document.getElementById('new-badge');
+            if (badge) badge.classList.remove('hidden');
+            
+            setTimeout(() => {
+                if (badge) badge.classList.add('hidden');
+            }, 3000);
+            
+            // Show desktop notification if supported
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(`طلب واتساب جديد من ${order.customerName}`, {
+                    body: `المبلغ: ${order.total} ر.س - الموقع: ${order.location}`,
+                    icon: 'https://cdn-icons-png.flaticon.com/512/124/124034.png'
+                });
+            }
+        }
+
+        // Render all orders
+        function renderOrders() {
+            const newOrders = orders.filter(o => o.status === 'جديد');
+            const inProgressOrders = orders.filter(o => o.status === 'قيد التحضير');
+            const readyOrders = orders.filter(o => o.status === 'جاهز');
+            const completedOrders = orders.filter(o => o.status === 'مكتمل');
+            
+            // Update counters
+            document.getElementById('active-total-count').textContent = newOrders.length + inProgressOrders.length + readyOrders.length;
+            document.getElementById('new-count').textContent = newOrders.length;
+            document.getElementById('progress-count').textContent = inProgressOrders.length;
+            document.getElementById('ready-count').textContent = readyOrders.length;
+            
+            // Update mobile counters
+            document.getElementById('mobile-active-count').textContent = newOrders.length + inProgressOrders.length + readyOrders.length;
+            document.getElementById('mobile-new-count').textContent = newOrders.length;
+            document.getElementById('mobile-progress-count').textContent = inProgressOrders.length;
+            document.getElementById('mobile-ready-count').textContent = readyOrders.length;
+            
+            // Update mobile tab badges
+            updateMobileTabBadges();
+            
+            // Render desktop columns
+            renderColumn('new-orders-container', newOrders);
+            renderColumn('progress-orders-container', inProgressOrders);
+            renderColumn('ready-orders-container', readyOrders);
+            renderColumn('completed-orders-container', completedOrders.slice(0, 5));
+            
+            // Render mobile columns
+            renderColumn('mobile-new-orders-container', newOrders, true);
+            renderColumn('mobile-progress-orders-container', inProgressOrders, true);
+            renderColumn('mobile-ready-orders-container', readyOrders, true);
+            renderColumn('mobile-completed-orders-container', completedOrders.slice(0, 5), true);
+        }
+
+        // Update mobile tab badges
+        function updateMobileTabBadges() {
+            const newOrders = orders.filter(o => o.status === 'جديد');
+            const inProgressOrders = orders.filter(o => o.status === 'قيد التحضير');
+            const readyOrders = orders.filter(o => o.status === 'جاهز');
+            
+            document.getElementById('mobile-tab-new-badge').textContent = newOrders.length;
+            document.getElementById('mobile-tab-progress-badge').textContent = inProgressOrders.length;
+            document.getElementById('mobile-tab-ready-badge').textContent = readyOrders.length;
+        }
+
+        // Render a specific column
+        function renderColumn(containerId, orders, isMobile = false) {
+            const container = document.getElementById(containerId);
+            
+            if (orders.length === 0) {
+                container.innerHTML = getEmptyState(containerId, isMobile);
+                return;
+            }
+            
+            container.innerHTML = orders.map(order => createOrderCard(order, isMobile)).join('');
+        }
+
+        // Get empty state for columns
+        function getEmptyState(containerId, isMobile = false) {
+            const messages = {
+                'new-orders-container': {
+                    icon: 'comments',
+                    text: 'في انتظار طلبات واتساب الجديدة...'
+                },
+                'progress-orders-container': {
+                    icon: 'utensils',
+                    text: 'لا توجد طلبات قيد التحضير'
+                },
+                'ready-orders-container': {
+                    icon: 'motorcycle',
+                    text: 'لا توجد طلبات جاهزة للتسليم'
+                },
+                'completed-orders-container': {
+                    icon: 'archive',
+                    text: 'لا توجد طلبات مكتملة'
+                },
+                'mobile-new-orders-container': {
+                    icon: 'comments',
+                    text: 'في انتظار طلبات واتساب...'
+                },
+                'mobile-progress-orders-container': {
+                    icon: 'utensils',
+                    text: 'لا توجد طلبات قيد التحضير'
+                },
+                'mobile-ready-orders-container': {
+                    icon: 'motorcycle',
+                    text: 'لا توجد طلبات جاهزة'
+                },
+                'mobile-completed-orders-container': {
+                    icon: 'archive',
+                    text: 'لا توجد طلبات مكتملة'
+                }
+            };
+            
+            const msg = messages[containerId];
+            const textSize = isMobile ? 'text-sm' : 'font-medium';
+            
+            return `
+                <div class="text-center p-4 ${isMobile ? 'p-3' : 'p-6'} text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                    <i class="fas fa-${msg.icon} ${isMobile ? 'text-2xl' : 'text-3xl'} mb-2 ${isMobile ? 'mb-1' : 'mb-3'}"></i>
+                    <p class="${textSize}">${msg.text}</p>
+                </div>
+            `;
+        }
+
+        // Create order card HTML
+        function createOrderCard(order, isMobile = false) {
+            const itemsHtml = order.items.map(item => `
+                <div class="flex justify-between items-center py-1 ${isMobile ? 'text-xs' : 'text-sm'} border-b border-gray-100 last:border-b-0">
+                    <span class="text-gray-700 font-medium ${isMobile ? 'text-xs' : ''}">${item.name}</span>
+                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">${item.qty}</span>
+                </div>
+            `).join('');
+            
+            const timeString = order.timestamp.toLocaleTimeString('ar-EG', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            const customerInitial = order.customerName.charAt(0);
+            const whatsappLink = `https://wa.me/${order.customerPhone}`;
+            const paddingClass = isMobile ? 'p-3' : 'p-4';
+            const textSizeClass = isMobile ? 'text-sm' : 'text-base';
+            
+            return `
+                <div id="order-${order.id}" class="bg-white ${paddingClass} rounded-xl shadow-lg border-r-4 ${order.districtClass} order-card mb-3 ${isMobile ? 'mb-2' : ''}">
+                    <!-- Header -->
+                    <div class="flex justify-between items-center mb-3 ${isMobile ? 'mb-2' : 'mb-4'} pb-2 border-b border-gray-200">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold ${isMobile ? 'text-base' : 'text-lg'} text-gray-900">${order.id}</h3>
+                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center gap-1">
+                                <i class="fab fa-whatsapp"></i> ${isMobile ? '' : 'واتساب'}
+                            </span>
+                        </div>
+                        <span class="text-xs text-gray-500">${timeString}</span>
+                    </div>
+                    
+                    <!-- Customer Info -->
+                    <div class="mb-3 ${isMobile ? 'mb-2' : 'mb-4'} ${isMobile ? 'p-2' : 'p-2'} bg-gray-50 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 ${isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-whatsapp text-white flex items-center justify-center font-bold ${isMobile ? 'text-xs' : 'text-sm'} shadow-md">
+                                ${customerInitial}
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-800 ${isMobile ? 'text-sm' : ''}">${order.customerName}</p>
+                                <p class="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                                    <i class="fas fa-map-marker-alt text-whatsapp ${isMobile ? 'text-xs' : ''}"></i> 
+                                    ${order.location}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- WhatsApp Button -->
+                        <div class="mt-2 ${isMobile ? 'mt-2' : 'mt-3'} pt-2 ${isMobile ? 'pt-2' : 'pt-3'} border-t border-gray-200 flex justify-between items-center">
+                            <span class="text-xs ${isMobile ? 'text-xs' : 'text-sm'} text-gray-600 font-medium">${formatPhoneNumber(order.customerPhone)}</span>
+                            <a href="${whatsappLink}" target="_blank" class="text-white bg-whatsapp p-2 rounded-full hover:opacity-80 transition-opacity touch-button" title="فتح محادثة واتساب">
+                                <i class="fab fa-whatsapp ${isMobile ? 'text-base' : 'text-lg'}"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Items -->
+                    <div class="mb-3 ${isMobile ? 'mb-2' : 'mb-4'}">
+                        <h4 class="${isMobile ? 'text-xs' : 'text-sm'} font-bold mb-2 text-gray-600">قائمة الطلبات:</h4>
+                        <div class="bg-gray-50 ${isMobile ? 'p-2' : 'p-3'} rounded-lg border border-gray-200">
+                            ${itemsHtml}
+                        </div>
+                    </div>
+
+                    <!-- Footer & Actions -->
+                    <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                        <div class="flex flex-col">
+                            <span class="${isMobile ? 'text-lg' : 'text-xl'} font-bold text-whatsapp">${order.total} ر.س</span>
+                            <span class="text-xs text-gray-400">الإجمالي</span>
+                        </div>
+
+                        ${order.status !== 'مكتمل' ? `
+                            <div class="flex gap-2">
+                                <button onclick="updateOrderStatus('${order.id}')"
+                                    class="bg-whatsapp text-white ${isMobile ? 'text-xs' : 'text-sm'} font-medium py-2 px-3 ${isMobile ? 'py-2 px-3' : 'py-2 px-4'} rounded-lg transition-colors shadow-md flex items-center gap-2 hover:bg-green-600 touch-button">
+                                    <i class="fas fa-forward ${isMobile ? 'text-xs' : ''}"></i> 
+                                    <span class="${isMobile ? 'hidden' : ''}">${getNextAction(order.status)}</span>
+                                </button>
+                                <button onclick="deleteOrder('${order.id}')"
+                                    class="text-red-500 hover:text-red-700 ${isMobile ? 'text-xs' : 'text-sm'} font-medium py-2 px-2 ${isMobile ? 'py-2 px-2' : 'py-2 px-3'} rounded-lg transition-colors border border-red-300 hover:bg-red-50 touch-button">
+                                    <i class="fas fa-trash-alt ${isMobile ? 'text-xs' : ''}"></i>
+                                </button>
+                            </div>
+                        ` : `
+                            <span class="text-xs font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-700">مكتمل</span>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Get next action based on current status
+        function getNextAction(currentStatus) {
+            const actions = {
+                'جديد': 'بدء التحضير',
+                'قيد التحضير': 'تم التحضير',
+                'جاهز': 'إكمال الطلب'
+            };
+            return actions[currentStatus] || 'خطأ';
+        }
+
+        // Update order status
+        function updateOrderStatus(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            
+            const statusFlow = ['جديد', 'قيد التحضير', 'جاهز', 'مكتمل'];
+            const currentIndex = statusFlow.indexOf(order.status);
+            
+            if (currentIndex < statusFlow.length - 1) {
+                order.status = statusFlow[currentIndex + 1];
+                
+                if (order.status === 'مكتمل') {
+                    showCustomMessage('تهانينا!', `تم إكمال الطلب ${orderId} بنجاح!`, 'success');
+                }
+                
+                renderOrders();
+            }
+        }
+
+        // Delete order
+        function deleteOrder(orderId) {
+            if (confirm('هل أنت متأكد من حذف هذا الطلب؟')) {
+                orders = orders.filter(o => o.id !== orderId);
+                renderOrders();
+                showCustomMessage('تم الحذف', `تم حذف الطلب ${orderId}`, 'success');
+            }
+        }
+
+        // Format phone number for display
+        function formatPhoneNumber(phone) {
+            if (phone.length === 12) {
+                return `+${phone.substring(0, 3)} ${phone.substring(3, 7)} ${phone.substring(7)}`;
+            }
+            return phone;
+        }
+
+        // Show custom message
+        function showCustomMessage(title, message, type = 'info') {
+            document.getElementById('msg-title').textContent = title;
+            document.getElementById('msg-message').textContent = message;
+            document.getElementById('custom-message-box').classList.remove('hidden');
+        }
+
+        // Close custom message
+        function closeCustomMessage() {
+            document.getElementById('custom-message-box').classList.add('hidden');
+        }
+
+        // Request notification permission
+        function requestNotificationPermission() {
+            if ("Notification" in window && Notification.permission === "default") {
+                Notification.requestPermission();
+            }
+        }
+
+        // Handle window resize
+        function handleResize() {
+            const demoButton = document.getElementById('demoToggle');
+            if (demoButton) {
+                if (window.innerWidth >= 640) {
+                    // Desktop
+                    if (DEMO_CONFIG.enabled) {
+                        demoButton.innerHTML = '<i class="fas fa-pause"></i> إيقاف المحاكاة';
+                    } else {
+                        demoButton.innerHTML = '<i class="fas fa-play"></i> تشغيل المحاكاة';
+                    }
+                } else {
+                    // Mobile
+                    if (DEMO_CONFIG.enabled) {
+                        demoButton.innerHTML = '<i class="fas fa-pause"></i>';
+                    } else {
+                        demoButton.innerHTML = '<i class="fas fa-play"></i>';
+                    }
+                }
+            }
+        }
+
+        // Initialize when page loads
+        window.onload = function() {
+            initDemo();
+            requestNotificationPermission();
+            window.addEventListener('resize', handleResize);
+            
+            // Generate first order immediately
+            setTimeout(() => {
+                generateWhatsAppOrder();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>
